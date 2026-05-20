@@ -5,329 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>JARVIS AUTO v8</title>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      background: #0a0f1e;
-      color: #e8eaf0;
-      font-family: 'IBM Plex Mono', monospace;
-      min-height: 100vh;
-      display: flex;
-      align-items: flex-start;
-      justify-content: center;
-      padding: 32px 16px;
-    }
-    .app {
-      width: 100%;
-      max-width: 600px;
-    }
-    .header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-      padding-bottom: 20px;
-      margin-bottom: 28px;
-    }
-    .logo {
-      width: 44px; height: 44px;
-      border-radius: 50%;
-      background: #FF6B00;
-      display: flex; align-items: center; justify-content: center;
-      flex-shrink: 0;
-    }
-    .logo svg { width: 22px; height: 22px; }
-    .brand-name {
-      font-size: 20px; font-weight: 600;
-      font-family: 'IBM Plex Sans', sans-serif;
-      letter-spacing: -0.5px;
-      color: #fff;
-    }
-    .brand-sub {
-      font-size: 10px; color: #666;
-      letter-spacing: 3px; margin-top: 2px;
-    }
-    .label {
-      font-size: 11px; color: #555;
-      letter-spacing: 2px; margin-bottom: 10px;
-    }
-    .input-row {
-      display: flex; gap: 10px; margin-bottom: 14px;
-    }
-    input[type="text"] {
-      flex: 1;
-      padding: 12px 16px;
-      font-size: 14px;
-      font-family: 'IBM Plex Mono', monospace;
-      background: #111827;
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 8px;
-      color: #e8eaf0;
-      outline: none;
-      transition: border 0.2s;
-    }
-    input[type="text"]:focus { border-color: #FF6B00; }
-    input[type="text"]::placeholder { color: #444; }
-    .btn-analyze {
-      padding: 12px 22px;
-      background: #FF6B00;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 12px;
-      font-family: 'IBM Plex Mono', monospace;
-      font-weight: 600;
-      cursor: pointer;
-      letter-spacing: 1px;
-      white-space: nowrap;
-      transition: opacity 0.2s;
-    }
-    .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
-    .examples {
-      display: flex; flex-wrap: wrap; gap: 8px;
-      margin-bottom: 32px;
-    }
-    .example-btn {
-      padding: 5px 12px;
-      font-size: 11px;
-      font-family: 'IBM Plex Mono', monospace;
-      background: transparent;
-      color: #555;
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 4px;
-      cursor: pointer;
-      transition: color 0.2s, border-color 0.2s;
-    }
-    .example-btn:hover { color: #FF6B00; border-color: #FF6B00; }
-    .loading {
-      text-align: center;
-      padding: 48px 0;
-      color: #444;
-      font-size: 12px;
-      letter-spacing: 3px;
-    }
-    .loading .spin {
-      font-size: 28px;
-      display: block;
-      margin-bottom: 14px;
-      animation: spin 2s linear infinite;
-    }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .error-box {
-      padding: 16px;
-      background: rgba(239,68,68,0.08);
-      border: 1px solid rgba(239,68,68,0.25);
-      border-radius: 8px;
-      color: #ef4444;
-      font-size: 13px;
-      font-family: 'IBM Plex Sans', sans-serif;
-    }
-    .result { display: flex; flex-direction: column; gap: 12px; }
-    .card {
-      background: #111827;
-      border: 1px solid rgba(255,255,255,0.07);
-      border-radius: 10px;
-      padding: 16px 18px;
-    }
-    .card-accent { border-left: 3px solid #FF6B00; }
-    .card-label {
-      font-size: 10px; color: #555;
-      letter-spacing: 2px; margin-bottom: 8px;
-    }
-    .card-title {
-      font-size: 18px; font-weight: 600;
-      font-family: 'IBM Plex Sans', sans-serif;
-      color: #fff; line-height: 1.3;
-      margin-bottom: 10px;
-    }
-    .card-desc {
-      font-size: 13px; color: #8892a4;
-      font-family: 'IBM Plex Sans', sans-serif;
-      line-height: 1.6;
-    }
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .danger-low { color: #22c55e; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
-    .danger-medium { color: #f59e0b; border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.06); }
-    .danger-high { color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
-    .danger-value { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
-    .danger-reason {
-      font-size: 11px; color: #666;
-      font-family: 'IBM Plex Sans', sans-serif;
-      line-height: 1.4;
-    }
-    .drive-yes { color: #22c55e; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
-    .drive-no { color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
-    .drive-icon { font-size: 28px; margin-bottom: 6px; }
-    .drive-text { font-size: 11px; font-weight: 600; letter-spacing: 1px; }
-    .drive-card {
-      display: flex; flex-direction: column;
-      align-items: center; justify-content: center;
-      text-align: center;
-    }
-    .price-value {
-      font-size: 22px; font-weight: 600;
-      color: #fff; margin-bottom: 6px;
-    }
-    .price-comment {
-      font-size: 12px; color: #666;
-      font-family: 'IBM Plex Sans', sans-serif;
-    }
-    .action-row {
-      display: flex; gap: 12px; align-items: flex-start;
-      margin-bottom: 10px;
-    }
-    .action-row:last-child { margin-bottom: 0; }
-    .action-num {
-      font-size: 10px; font-weight: 600;
-      color: #FF6B00; min-width: 20px; padding-top: 2px;
-    }
-    .action-text {
-      font-size: 13px; color: #c8d0dc;
-      font-family: 'IBM Plex Sans', sans-serif;
-      line-height: 1.5;
-    }
-    .btn-reset {
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.08);
-      color: #555;
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-family: 'IBM Plex Mono', monospace;
-      cursor: pointer;
-      letter-spacing: 1px;
-      transition: color 0.2s;
-    }
-    .btn-reset:hover { color: #aaa; }
-    @media (max-width: 480px) {
-      .two-col { grid-template-columns: 1fr; }
-      .price-value { font-size: 18px; }
-    }
-  </style>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.4/umd/Recharts.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body { margin: 0; background: #060c18; color: #dde3f0; font-family: 'IBM Plex Sans', sans-serif; overflow-x: hidden; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+    </style>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div class="logo">
-      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-        <circle cx="12" cy="12" r="3"/>
-        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
-      </svg>
-    </div>
-    <div>
-      <div class="brand-name">JARVIS AUTO</div>
-      <div class="brand-sub">ИИ-ДИАГНОСТИКА</div>
-    </div>
-  </div>
+    <div id="root"></div>
 
-  <div class="label">КОД ОШИБКИ ИЛИ СИМПТОМ</div>
-  <div class="input-row">
-    <input type="text" id="query" placeholder="Например: P0301 или «стучит двигатель»" />
-    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">АНАЛИЗ →</button>
-  </div>
-  <div class="examples">
-    <button class="example-btn" onclick="setExample('P0301')">P0301</button>
-    <button class="example-btn" onclick="setExample('P0420')">P0420</button>
-    <button class="example-btn" onclick="setExample('стук при торможении')">стук при торможении</button>
-    <button class="example-btn" onclick="setExample('не заводится утром')">не заводится утром</button>
-  </div>
+    <script type="text/babel">
+        // =========================================================================
+        // CONFIG & TOKENS
+        // =========================================================================
+        const API_KEY = "ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА"; // <--- ВСТАВЬ СВОЙ КЛЮЧ sk-ant-...
 
-  <div id="output"></div>
-</div>
+        const C = {
+            bg: "#060c18", bg2: "#08101f", card: "#0b1628", card2: "#0d1a30",
+            border: "rgba(255,255,255,0.07)", border2: "rgba(255,255,0.13)",
+            o: "#FF6B00", oG: "rgba(255,107,0,0.1)",
+            t: "#dde3f0", t2: "#5a7090", t3: "#2e4060",
+            g: "#22c55e", gG: "rgba(34,197,94,0.1)",
+            y: "#f59e0b", yG: "rgba(245,158,11,0.1)",
+            r: "#ef4444", rG: "rgba(239,68,68,0.1)",
+            b: "#3b82f6", bG: "rgba(59,130,246,0.1)",
+            p: "#8b5cf6", pG: "rgba(139,92,246,0.1)"
+        };
+        const M = "'IBM Plex Mono', monospace";
+        const S = "'IBM Plex Sans', sans-serif";
 
-<script>
-const SYSTEM = `Ты — Джарвис, ИИ-диагност для автомобилей. Отвечай ТОЛЬКО на русском языке.
-Пользователь вводит код ошибки OBD или описывает симптом.
-Ответь строго в JSON формате без markdown, без backticks:
-{"title":"Короткое название проблемы (до 6 слов)","system":"Система автомобиля","description":"Понятное объяснение для обычного человека (2-3 предложения)","danger":"низкий или средний или высокий","danger_reason":"Одно предложение почему такой уровень","can_drive":true или false,"price_min":число в рублях,"price_max":число в рублях,"price_comment":"Что входит в стоимость","actions":["действие 1","действие 2","действие 3"]}
-Цены реалистичные для России 2024 года. Если не автомобильный запрос — верни {"error":"Это не похоже на автомобильную проблему. Введите код ошибки OBD или опишите симптом."}`;
+        // =========================================================================
+        // DATABASES & DEFAULTS
+        // =========================================================================
+        const OBD_DB = {
+            P0171: { title: "Смесь бедная (банк 1)", system: "Топливная система", danger: "средний", can_drive: true, desc: "Бедная топливно-воздушная смесь. Подсос воздуха или слабый насос.", price_min: 2000, price_max: 15000, price_comment: "Диагностика", actions: ["Проверить патрубки", "Заменить фильтр", "Промыть форсунки"] },
+            P0300: { title: "Пропуски зажигания", system: "Двигатель", danger: "высокий", can_drive: false, desc: "Случайные пропуски в цилиндрах. Опасно для катализатора.", price_min: 3000, price_max: 25000, price_comment: "Диагностика зажигания", actions: ["Замена свечей", "Проверка катушек", "Компрессия"] },
+            P0420: { title: "КПД катализатора", system: "Выхлопная система", danger: "низкий", can_drive: true, desc: "Эффективность катализатора ниже нормы.", price_min: 5000, price_max: 60000, price_comments: "Замена или чистка", actions: ["Лямбда-зонды", "Присадка", "Замена"] },
+            P0700: { title: "Ошибка АКПП", system: "Трансмиссия", danger: "высокий", can_drive: false, desc: "Общая ошибка блока управления трансмиссией.", price_min: 5000, price_max: 80000, price_comment: "Диагностика АКПП", actions: ["Проверка масла", "Скан ошибок", "Сервис"] },
+        };
 
-function setExample(val) {
-  document.getElementById('query').value = val;
-  analyze();
-}
-
-document.getElementById('query').addEventListener('keydown', e => {
-  if (e.key === 'Enter') analyze();
-});
-
-async function analyze() {
-  const q = document.getElementById('query').value.trim();
-  if (!q) return;
-  const out = document.getElementById('output');
-  const btn = document.getElementById('analyzeBtn');
-  btn.disabled = true;
-  out.innerHTML = `<div class="loading"><span class="spin">⚙</span>ДИАГНОСТИКА...</div>`;
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': 'ВСТАВЬ_КЛЮЧ_СЮДА',
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true'
-      },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1000,
-        system: SYSTEM,
-        messages: [{ role: 'user', content: q }]
-      })
-    });
-    const data = await res.json();
-    const text = data.content?.find(b => b.type === 'text')?.text || '';
-    const r = JSON.parse(text);
-    if (r.error) {
-      out.innerHTML = `<div class="error-box">${r.error}</div>`;
-    } else {
-      renderResult(r);
-    }
-  } catch(e) {
-    out.innerHTML = `<div class="error-box">Ошибка соединения. Попробуй ещё раз.</div>`;
-  }
-  btn.disabled = false;
-}
-
-function renderResult(r) {
-  const dangerClass = r.danger === 'низкий' ? 'danger-low' : r.danger === 'средний' ? 'danger-medium' : 'danger-high';
-  const dangerLabel = r.danger === 'низкий' ? 'НИЗКИЙ' : r.danger === 'средний' ? 'СРЕДНИЙ' : 'ВЫСОКИЙ';
-  const driveClass = r.can_drive ? 'drive-yes' : 'drive-no';
-  const driveIcon = r.can_drive ? '✓' : '✗';
-  const driveText = r.can_drive ? 'МОЖНО ЕХАТЬ' : 'НЕ ЕХАТЬ';
-  const actions = (r.actions || []).map((a, i) =>
-    `<div class="action-row"><span class="action-num">${String(i+1).padStart(2,'0')}</span><span class="action-text">${a}</span></div>`
-  ).join('');
-
-  document.getElementById('output').innerHTML = `
-    <div class="result">
-      <div class="card card-accent">
-        <div class="card-label">${(r.system || '').toUpperCase()}</div>
-        <div class="card-title">${r.title}</div>
-        <div class="card-desc">${r.description}</div>
-      </div>
-      <div class="two-col">
-        <div class="card ${dangerClass}">
-          <div class="card-label">ОПАСНОСТЬ</div>
-          <div class="danger-value">${dangerLabel}</div>
-          <div class="danger-reason">${r.danger_reason}</div>
-        </div>
-        <div class="card ${driveClass} drive-card">
-          <div class="drive-icon">${driveIcon}</div>
-          <div class="drive-text">${driveText}</div>
-        </div>
-      </div>
-      <div class="card">
-        <div class="card-label">СТОИМОСТЬ РЕМОНТА</div>
-        <div class="price-value">${(r.price_min||0).toLocaleString('ru-RU')} – ${(r.price_max||0).toLocaleString('ru-RU')} ₽</div>
-        <div class="price-comment">${r.price_comment}</div>
-      </div>
-      <div class="card">
-        <div class="card-label">ЧТО ДЕЛАТЬ</div>
-        ${actions}
-      </div>
-      <button class="btn-reset" onclick="document.getElementById('output').innerHTML='';document.getElementById('query').value='';">← НОВЫЙ ЗАПРОС</button>
-    </div>`;
-}
-</script>
-</body>
-</html>
+        const BODY_PANELS = [
+            { id: "bumper_f", name: "Передний бампер", path: "M 55,10 L 145,10 L 150,35 L 50,35 Z" },
+            { id: "hood", name: "Капот", path: "M 50,35 L 150,35 L 148,110 L 52,110 Z" },
+            { id: "fender_fl", name: "Крыло пер. лев.", path: "M 30,40 L 52,40 L 52,110 L 30,110 Z" },
+            { id: "fender_fr", name: "Крыло пер. прав.", path: "M 148,40 L 170,40 L 170,110 L 148,110 Z" },
+            { id: "windshield_f", name: "Лобовое стекло", path: "M 52,110 L 148,110 L 145,140 L 55,140 Z" },
+            { id: "door_fl", name: "Дверь пер. лев.", path: "M 28,112 L 52,112](streamdown:incomplete-link)
