@@ -1,291 +1,333 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>JARVIS AUTO v8</title>
-    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/recharts@2.12.4/umd/Recharts.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=IBM+Plex+Sans:wght@400;500;700&display=swap" rel="stylesheet">
-    <style>
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-        body { margin: 0; background: #060c18; color: #dde3f0; font-family: 'IBM Plex Sans', sans-serif; overflow-x: hidden; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Jarvis Auto — ИИ-диагностика</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: #0a0f1e;
+      color: #e8eaf0;
+      font-family: 'IBM Plex Mono', monospace;
+      min-height: 100vh;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+    .app {
+      width: 100%;
+      max-width: 600px;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
+      padding-bottom: 20px;
+      margin-bottom: 28px;
+    }
+    .logo {
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      background: #FF6B00;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .logo svg { width: 22px; height: 22px; }
+    .brand-name {
+      font-size: 20px; font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+      letter-spacing: -0.5px;
+      color: #fff;
+    }
+    .brand-sub {
+      font-size: 10px; color: #666;
+      letter-spacing: 3px; margin-top: 2px;
+    }
+    .label {
+      font-size: 11px; color: #555;
+      letter-spacing: 2px; margin-bottom: 10px;
+    }
+    .input-row {
+      display: flex; gap: 10px; margin-bottom: 14px;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 12px 16px;
+      font-size: 14px;
+      font-family: 'IBM Plex Mono', monospace;
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 8px;
+      color: #e8eaf0;
+      outline: none;
+      transition: border 0.2s;
+    }
+    input[type="text"]:focus { border-color: #FF6B00; }
+    input[type="text"]::placeholder { color: #444; }
+    .btn-analyze {
+      padding: 12px 22px;
+      background: #FF6B00;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: 'IBM Plex Mono', monospace;
+      font-weight: 600;
+      cursor: pointer;
+      letter-spacing: 1px;
+      white-space: nowrap;
+      transition: opacity 0.2s;
+    }
+    .btn-analyze:disabled { opacity: 0.4; cursor: not-allowed; }
+    .examples {
+      display: flex; flex-wrap: wrap; gap: 8px;
+      margin-bottom: 32px;
+    }
+    .example-btn {
+      padding: 5px 12px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      background: transparent;
+      color: #555;
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 4px;
+      cursor: pointer;
+      transition: color 0.2s, border-color 0.2s;
+    }
+    .example-btn:hover { color: #FF6B00; border-color: #FF6B00; }
+    .loading {
+      text-align: center;
+      padding: 48px 0;
+      color: #444;
+      font-size: 12px;
+      letter-spacing: 3px;
+    }
+    .loading .spin {
+      font-size: 28px;
+      display: block;
+      margin-bottom: 14px;
+      animation: spin 2s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .error-box {
+      padding: 16px;
+      background: rgba(239,68,68,0.08);
+      border: 1px solid rgba(239,68,68,0.25);
+      border-radius: 8px;
+      color: #ef4444;
+      font-size: 13px;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .result { display: flex; flex-direction: column; gap: 12px; }
+    .card {
+      background: #111827;
+      border: 1px solid rgba(255,255,255,0.07);
+      border-radius: 10px;
+      padding: 16px 18px;
+    }
+    .card-accent { border-left: 3px solid #FF6B00; }
+    .card-label {
+      font-size: 10px; color: #555;
+      letter-spacing: 2px; margin-bottom: 8px;
+    }
+    .card-title {
+      font-size: 18px; font-weight: 600;
+      font-family: 'IBM Plex Sans', sans-serif;
+      color: #fff; line-height: 1.3;
+      margin-bottom: 10px;
+    }
+    .card-desc {
+      font-size: 13px; color: #8892a4;
+      font-family: 'IBM Plex Sans', sans-serif;
+      line-height: 1.6;
+    }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .danger-low { color: #22c55e; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
+    .danger-medium { color: #f59e0b; border-color: rgba(245,158,11,0.25); background: rgba(245,158,11,0.06); }
+    .danger-high { color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
+    .danger-value { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+    .danger-reason {
+      font-size: 11px; color: #666;
+      font-family: 'IBM Plex Sans', sans-serif;
+      line-height: 1.4;
+    }
+    .drive-yes { color: #22c55e; border-color: rgba(34,197,94,0.25); background: rgba(34,197,94,0.06); }
+    .drive-no { color: #ef4444; border-color: rgba(239,68,68,0.25); background: rgba(239,68,68,0.06); }
+    .drive-icon { font-size: 28px; margin-bottom: 6px; }
+    .drive-text { font-size: 11px; font-weight: 600; letter-spacing: 1px; }
+    .drive-card {
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      text-align: center;
+    }
+    .price-value {
+      font-size: 22px; font-weight: 600;
+      color: #fff; margin-bottom: 6px;
+    }
+    .price-comment {
+      font-size: 12px; color: #666;
+      font-family: 'IBM Plex Sans', sans-serif;
+    }
+    .action-row {
+      display: flex; gap: 12px; align-items: flex-start;
+      margin-bottom: 10px;
+    }
+    .action-row:last-child { margin-bottom: 0; }
+    .action-num {
+      font-size: 10px; font-weight: 600;
+      color: #FF6B00; min-width: 20px; padding-top: 2px;
+    }
+    .action-text {
+      font-size: 13px; color: #c8d0dc;
+      font-family: 'IBM Plex Sans', sans-serif;
+      line-height: 1.5;
+    }
+    .btn-reset {
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #555;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-family: 'IBM Plex Mono', monospace;
+      cursor: pointer;
+      letter-spacing: 1px;
+      transition: color 0.2s;
+    }
+    .btn-reset:hover { color: #aaa; }
+    @media (max-width: 480px) {
+      .two-col { grid-template-columns: 1fr; }
+      .price-value { font-size: 18px; }
+    }
+  </style>
 </head>
 <body>
-    <div id="root"></div>
+<div class="app">
+  <div class="header">
+    <div class="logo">
+      <svg viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.22 4.22l2.12 2.12M17.66 17.66l2.12 2.12M4.22 19.78l2.12-2.12M17.66 6.34l2.12-2.12"/>
+      </svg>
+    </div>
+    <div>
+      <div class="brand-name">JARVIS AUTO</div>
+      <div class="brand-sub">ИИ-ДИАГНОСТИКА</div>
+    </div>
+  </div>
 
-    <script type="text/babel">
-        // =========================================================================
-        // CONFIG & TOKENS
-        // =========================================================================
-        const API_KEY = "ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА"; // <--- ВСТАВЬ СВОЙ КЛЮЧ sk-ant-...
+  <div class="label">КОД ОШИБКИ ИЛИ СИМПТОМ</div>
+  <div class="input-row">
+    <input type="text" id="query" placeholder="Например: P0301 или «стучит двигатель»" />
+    <button class="btn-analyze" id="analyzeBtn" onclick="analyze()">АНАЛИЗ →</button>
+  </div>
+  <div class="examples">
+    <button class="example-btn" onclick="setExample('P0301')">P0301</button>
+    <button class="example-btn" onclick="setExample('P0420')">P0420</button>
+    <button class="example-btn" onclick="setExample('стук при торможении')">стук при торможении</button>
+    <button class="example-btn" onclick="setExample('не заводится утром')">не заводится утром</button>
+  </div>
 
-        const C = {
-            bg: "#060c18", bg2: "#08101f", card: "#0b1628", card2: "#0d1a30",
-            border: "rgba(255,255,255,0.07)", border2: "rgba(255,255,0.13)",
-            o: "#FF6B00", oG: "rgba(255,107,0,0.1)",
-            t: "#dde3f0", t2: "#5a7090", t3: "#2e4060",
-            g: "#22c55e", gG: "rgba(34,197,94,0.1)",
-            y: "#f59e0b", yG: "rgba(245,158,11,0.1)",
-            r: "#ef4444", rG: "rgba(239,68,68,0.1)",
-            b: "#3b82f6", bG: "rgba(59,130,246,0.1)",
-            p: "#8b5cf6", pG: "rgba(139,92,246,0.1)"
-        };
-        const M = "'IBM Plex Mono', monospace";
-        const S = "'IBM Plex Sans', sans-serif";
+  <div id="output"></div>
+</div>
 
-        // =========================================================================
-        // DATABASES & DEFAULTS
-        // =========================================================================
-        const OBD_DB = {
-            P0171: { title: "Смесь бедная (банк 1)", system: "Топливная система", danger: "средний", can_drive: true, desc: "Бедная топливно-воздушная смесь. Подсос воздуха или слабый насос.", price_min: 2000, price_max: 15000, price_comment: "Диагностика", actions: ["Проверить патрубки", "Заменить фильтр", "Промыть форсунки"] },
-            P0300: { title: "Пропуски зажигания", system: "Двигатель", danger: "высокий", can_drive: false, desc: "Случайные пропуски в цилиндрах. Опасно для катализатора.", price_min: 3000, price_max: 25000, price_comment: "Диагностика зажигания", actions: ["Замена свечей", "Проверка катушек", "Компрессия"] },
-            P0420: { title: "КПД катализатора", system: "Выхлопная система", danger: "низкий", can_drive: true, desc: "Эффективность катализатора ниже нормы.", price_min: 5000, price_max: 60000, price_comments: "Замена или чистка", actions: ["Лямбда-зонды", "Присадка", "Замена"] },
-            P0700: { title: "Ошибка АКПП", system: "Трансмиссия", danger: "высокий", can_drive: false, desc: "Общая ошибка блока управления трансмиссией.", price_min: 5000, price_max: 80000, price_comment: "Диагностика АКПП", actions: ["Проверка масла", "Скан ошибок", "Сервис"] },
-        };
+<script>
+const SYSTEM = `Ты — Джарвис, ИИ-диагност для автомобилей. Отвечай ТОЛЬКО на русском языке.
+Пользователь вводит код ошибки OBD или описывает симптом.
+Ответь строго в JSON формате без markdown, без backticks:
+{"title":"Короткое название проблемы (до 6 слов)","system":"Система автомобиля","description":"Понятное объяснение для обычного человека (2-3 предложения)","danger":"низкий или средний или высокий","danger_reason":"Одно предложение почему такой уровень","can_drive":true или false,"price_min":число в рублях,"price_max":число в рублях,"price_comment":"Что входит в стоимость","actions":["действие 1","действие 2","действие 3"]}
+Цены реалистичные для России 2024 года. Если не автомобильный запрос — верни {"error":"Это не похоже на автомобильную проблему. Введите код ошибки OBD или опишите симптом."}`;
 
-        const BODY_PANELS = [
-            { id: "bumper_f", name: "Передний бампер", path: "M 55,10 L 145,10 L 150,35 L 50,35 Z" },
-            { id: "hood", name: "Капот", path: "M 50,35 L 150,35 L 148,110 L 52,110 Z" },
-            { id: "fender_fl", name: "Крыло пер. лев.", path: "M 30,40 L 52,40 L 52,110 L 30,110 Z" },
-            { id: "fender_fr", name: "Крыло пер. прав.", path: "M 148,40 L 170,40 L 170,110 L 148,110 Z" },
-            { id: "windshield_f", name: "Лобовое стекло", path: "M 52,110 L 148,110 L 145,140 L 55,140 Z" },
-            { id: "door_fl", name: "Дверь пер. лев.", path: "M 28,112 L 52,112 L 52,195 L 28,195 Z" },
-            { id: "door_fr", name: "Дверь пер. прав.", path: "M 148,112 L 172,112 L 172,195 L 148,195 Z" },
-            { id: "roof", name: "Крыша", path: "M 55,140 L 145,140 L 145,230 L 55,230 Z" },
-            { id: "door_rl", name: "Дверь зад. лев.", path: "M 28,195 L 52,195 L 52,270 L 28,270 Z" },
-            { id: "door_rr", name: "Дверь зад. прав.", path: "M 148,195 L 172,195 L 172,270 L 148,270 Z" },
-            { id: "windshield_r", name: "Заднее стекло", path: "M 55,230 L 145,230 L 148,260 L 52,260 Z" },
-            { id: "quarter_l", name: "Крыло зад. лев.", path: "M 28,270 L 52,270 L 52,345 L 30,345 Z" },
-            { id: "quarter_r", name: "Крыло зад. прав.", path: "M 148,270 L 172,270 L 170,345 L 148,345 Z" },
-            { id: "trunk", name: "Багажник", path: "M 52,260 L 148,260 L 150,345 L 50,345 Z" },
-            { id: "bumper_r", name: "Задний бампер", path: "M 50,345 L 150,345 L 145,370 L 55,370 Z" },
-            { id: "wheel_fl", name: "Колесо ПЛ", path: "M 8,55 L 28,55 L 28,105 L 8,105 Z", wheel: true },
-            { id: "wheel_fr", name: "Колесо ПП", path: "M 172,55 L 192,55 L 192,105 L 172,105 Z", wheel: true },
-            { id: "wheel_rl", name: "Колесо ЗЛ", path: "M 8,250 L 28,250 L 28,300 L 8,300 Z", wheel: true },
-            { id: "wheel_rr", name: "Колесо ЗП", path: "M 172,250 L 192,250 L 192,300 L 172,300 Z", wheel: true },
-        ];
+function setExample(val) {
+  document.getElementById('query').value = val;
+  analyze();
+}
 
-        const DEF_CAR = { id: "car1", make: "Toyota", model: "Camry", year: 2019, mileage: 52400, color: "Белый перламутр", fuel: "АИ-95", vin: "", plate: "" };
-        const DEF_SVC = [{ id: 1, name: "Моторное масло", icon: "🛢", lastKm: 45000, lastDate: "2025-02-10", intervalKm: 10000, intervalMo: 12, status: "ok", history: [] }];
-        const DEF_EXP = [{ id: 1, date: "2025-05-10", cat: "топливо", amount: 3200, note: "АЗС Лукойл" }];
-        const DEF_FUEL = [{ id: 1, date: "2025-05-10", liters: 45, cost: 3200, odometer: 52400, station: "АЗС Лукойл" }];
-        const DEF_BODY = Object.fromEntries(BODY_PANELS.map(p => [p.id, { status: "ok", note: "" }]));
-        const DEF_TIRES = { fl: { pos: "Пер. лев.", pressure: 2.2, target: 2.2 }, fr: { pos: "Пер. прав.", pressure: 2.2, target: 2.2 }, rl: { pos: "Зад. лев.", pressure: 2.1, target: 2.1 }, rr: { pos: "Зад. прав.", pressure: 2.1, target: 2.1 } };
+document.getElementById('query').addEventListener('keydown', e => {
+  if (e.key === 'Enter') analyze();
+});
 
-        // =========================================================================
-        // HELPERS & HOOKS
-        // =========================================================================
-        function usePersist(key, init) {
-            const [v, setV] = React.useState(() => {
-                try { const s = localStorage.getItem("ja8_" + key); return s ? JSON.parse(s) : init; } catch { return init; }
-            });
-            const set = React.useCallback(fn => setV(prev => {
-                const next = typeof fn === "function" ? fn(prev) : fn;
-                try { localStorage.setItem("ja8_" + key, JSON.stringify(next)); } catch {}
-                return next;
-            }), [key]);
-            return [v, set];
-        }
+async function analyze() {
+  const q = document.getElementById('query').value.trim();
+  if (!q) return;
+  const out = document.getElementById('output');
+  const btn = document.getElementById('analyzeBtn');
+  btn.disabled = true;
+  out.innerHTML = `<div class="loading"><span class="spin">⚙</span>ДИАГНОСТИКА...</div>`;
+  try {
+    const res = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': 'ВСТАВЬ_КЛЮЧ_СЮДА',
+        'anthropic-version': '2023-06-01',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: SYSTEM,
+        messages: [{ role: 'user', content: q }]
+      })
+    });
+    const data = await res.json();
+    const text = data.content?.find(b => b.type === 'text')?.text || '';
+    const r = JSON.parse(text);
+    if (r.error) {
+      out.innerHTML = `<div class="error-box">${r.error}</div>`;
+    } else {
+      renderResult(r);
+    }
+  } catch(e) {
+    out.innerHTML = `<div class="error-box">Ошибка соединения. Попробуй ещё раз.</div>`;
+  }
+  btn.disabled = false;
+}
 
-        function useToast() {
-            const [toasts, setToasts] = React.useState([]);
-            const show = React.useCallback((msg, type = "info") => {
-                const id = Date.now();
-                setToasts(p => [...p, { id, msg, type }]);
-                setTimeout(() => setToasts(p => p.filter(t => t.id !== id)), 3000);
-            }, []);
-            return { toasts, show };
-        }
+function renderResult(r) {
+  const dangerClass = r.danger === 'низкий' ? 'danger-low' : r.danger === 'средний' ? 'danger-medium' : 'danger-high';
+  const dangerLabel = r.danger === 'низкий' ? 'НИЗКИЙ' : r.danger === 'средний' ? 'СРЕДНИЙ' : 'ВЫСОКИЙ';
+  const driveClass = r.can_drive ? 'drive-yes' : 'drive-no';
+  const driveIcon = r.can_drive ? '✓' : '✗';
+  const driveText = r.can_drive ? 'МОЖНО ЕХАТЬ' : 'НЕ ЕХАТЬ';
+  const actions = (r.actions || []).map((a, i) =>
+    `<div class="action-row"><span class="action-num">${String(i+1).padStart(2,'0')}</span><span class="action-text">${a}</span></div>`
+  ).join('');
 
-        const rub = n => (n || 0).toLocaleString("ru-RU") + " ₽";
-        const calcHealth = s => Math.max(0, Math.min(100, 100 - s.filter(x => x.status === "overdue").length * 18 - s.filter(x => x.status === "warning").length * 8));
-        
-        const sCfg = { ok: { color: C.g, bg: C.gG, label: "OK", icon: "✓" }, warning: { color: C.y, bg: C.yG, label: "СКОРО", icon: "⚠" }, overdue: { color: C.r, bg: C.rG, label: "ПРОСРОЧЕНО", icon: "✗" } };
-        const dCfg = { "низкий": { color: C.g, bg: C.gG, label: "НИЗКИЙ" }, "средний": { color: C.y, bg: C.yG, label: "СРЕДНИЙ" }, "высокий": { color: C.r, bg: C.rG, label: "ВЫСОКИЙ" } };
-
-        // =========================================================================
-        // AI CORE
-        // =========================================================================
-        async function ai(sys, msg) {
-            if (API_KEY === "ВСТАВЬ_СВОЙ_КЛЮЧ_СЮДА") return { error: "Ошибка: API-ключ не настроен. Вставьте ключ в коде." };
-            try {
-                const r = await fetch("https://api.anthropic.com/v1/messages", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "x-api-key": API_KEY, "anthropic-version": "2023-06-01" },
-                    body: JSON.stringify({ model: "claude-3-5-sonnet-20240620", max_tokens: 1000, system: sys, messages: [{ role: "user", content: msg }] })
-                });
-                const d = await r.json();
-                return JSON.parse(d.content[0].text);
-            } catch (e) { return { error: "Ошибка сети или ключа API." }; }
-        }
-
-        // =========================================================================
-        // COMPONENTS
-        // =========================================================================
-        const Card = ({ children, style = {}, onClick }) => (
-            <div onClick={onClick} style={{ background: C.card, border: `1px solid ${C.border}`, borderRadius: 16, padding: "16px", ...style, cursor: onClick ? "pointer" : "default", transition: "all 0.2s" }}>{children}</div>
-        );
-        const Lbl = ({ children, color = C.t2 }) => <div style={{ fontSize: 10, color, letterSpacing: 1.5, fontFamily: M, marginBottom: 8, textTransform: "uppercase" }}>{children}</div>;
-        const Pill = ({ children, color = C.o }) => <span style={{ fontSize: 9, fontWeight: 700, padding: "2px 8px", borderRadius: 10, background: color + "20", color, fontFamily: M }}>{children}</span>;
-        const PBtn = ({ children, onClick, disabled, full, color = C.o }) => (
-            <button onClick={onClick} disabled={disabled} style={{ padding: "12px 20px", background: disabled ? C.card2 : color, color: "white", border: "none", borderRadius: 10, fontSize: 12, fontFamily: M, fontWeight: 700, cursor: disabled ? "not-allowed" : "pointer", width: full ? "100%" : "auto" }}>{children}</button>
-        );
-
-        function Ring({ val, color, children }) {
-            const R = 45, C2 = 2 * Math.PI * R, pct = val / 100;
-            return (
-                <div style={{ position: "relative", width: 90, height: 90 }}>
-                    <svg width={90} height={90} style={{ transform: "rotate(-90deg)" }}>
-                        <circle cx={45} cy={45} r={R} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={8} />
-                        <circle cx={45} cy={45} r={R} fill="none" stroke={color} strokeWidth={8} strokeDasharray={`${pct * C2} ${C2}`} strokeLinecap="round" style={{ transition: "all 1s" }} />
-                    </svg>
-                    <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>{children}</div>
-                </div>
-            );
-        }
-
-        // =========================================================================
-        // SCREENS
-        // =========================================================================
-        function Dashboard({ name, car, services, diagHistory, expenses, fuel, body, tires, setTab }) {
-            const health = calcHealth(services);
-            const hColor = health >= 75 ? C.g : health >= 50 ? C.y : C.r;
-            const totalExp = expenses.reduce((s, e) => s + e.amount, 0);
-            const tco = car.mileage > 0 ? (totalExp / car.mileage).toFixed(2) : 0;
-            
-            return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <div style={{ marginBottom: 10 }}>
-                        <div style={{ fontSize: 13, color: C.t2, fontFamily: S }}>Привет, {name}</div>
-                        <div style={{ fontSize: 22, fontWeight: 700, color: C.t, fontFamily: S }}>{car.make} {car.model}</div>
-                        <div style={{ fontSize: 11, color: C.t2, fontFamily: M }}>{car.year} · {car.mileage.toLocaleString()} км · {car.plate}</div>
-                    </div>
-
-                    <Card style={{ background: `linear-gradient(135deg, ${C.card} 0%, #0f1f3a 100%)`, display: "flex", gap: 20, alignItems: "center" }}>
-                        <Ring color={hColor}>
-                            <div style={{ fontSize: 20, fontWeight: 700, color: hColor, fontFamily: M }}>{health}</div>
-                            <div style={{ fontSize: 8, color: C.t2 }}>/ 100</div>
-                        </Ring>
-                        <div style={{ flex: 1 }}>
-                            <Lbl>ЗДОРОВЬЕ АВТО</Lbl>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: hColor, fontFamily: M }}>{health >= 75 ? "ОТЛИЧНО" : health >= 50 ? "ВНИМАНИЕ" : "КРИТИЧНО"}</div>
-                            <div style={{ fontSize: 12, color: C.t2, fontFamily: S, marginTop: 4 }}>
-                                {services.filter(s => s.status === "overdue").length > 0 ? "Нужен срочный сервис" : "Все системы в норме"}
-                            </div>
-                        </div>
-                    </Card>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                        <Card onClick={() => setTab("finance")} style={{ cursor: "pointer" }}>
-                            <Lbl>TCO (1 км)</Lbl>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: C.o, fontFamily: M }}>{rub(tco)}</div>
-                            <div style={{ fontSize: 10, color: C.t2 }}>Общие расходы: {rub(totalExp)}</div>
-                        </Card>
-                        <Card onClick={() => setTab("body")} style={{ cursor: "pointer" }}>
-                            <Lbl>КУЗОВ</Lbl>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: C.t, fontFamily: M }}>
-                                {BODY_PANELS.filter(p => body[p.id]?.status !== "ok").length} проблем
-                            </div>
-                            <div style={{ fontSize: 10, color: C.t2 }}>Карта повреждений</div>
-                        </Card>
-                    </div>
-
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                        <Card onClick={() => setTab("maintain")} style={{ cursor: "pointer" }}>
-                            <Lbl>СЕРВИС ТО</Lbl>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: services.filter(s=>s.status==="overdue").length ? C.r : C.g, fontFamily: M }}>
-                                {services.filter(s=>s.status==="overdue").length} просрочено
-                            </div>
-                        </Card>
-                        <Card onClick={() => setTab("diag")} style={{ cursor: "pointer" }}>
-                            <Lbl>ДИАГНОСТИКА</Lbl>
-                            <div style={{ fontSize: 18, fontWeight: 700, color: C.b, fontFamily: M }}>
-                                {diagHistory.length} записей
-                            </div>
-                        </Card>
-                    </div>
-                </div>
-            );
-        }
-
-        function Diagnostics({ history, setHistory, car, toast }) {
-            const [input, setInput] = React.useState("");
-            const [loading, setLoading] = React.useState(false);
-            const [result, setResult] = React.useState(null);
-            const [err, setErr] = React.useState("");
-
-            const run = async (q) => {
-                const query = (q || input).trim();
-                if (!query || loading) return;
-                setLoading(true); setResult(null); setErr("");
-                
-                const code = query.toUpperCase().replace(/\s/g, "");
-                if (OBD_DB[code]) {
-                    const r = { ...OBD_DB[code], urgency: "1 неделя", parts: [] };
-                    setResult(r);
-                    setHistory(prev => [{ ...r, query, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
-                    toast("Найдено в базе", "success");
-                    setLoading(false); return;
-                }
-
-                const res = await ai(`Ты - Джарвис. JSON: {"title":"","system":"","description":"","danger":"низкий|средний|высокий","danger_reason":"","can_drive":true|false,"urgency":"","price_min":0,"price_max":0,"price_comment":"","actions":[],"parts":[]}`, `Авто: ${car.make} ${car.model}, запрос: ${query}`);
-                
-                if (res.error) setErr(res.error);
-                else {
-                    setResult(res);
-                    setHistory(prev => [{ ...res, query, time: new Date().toLocaleTimeString() }, ...prev].slice(0, 20));
-                    toast("Диагноз получен", "success");
-                }
-                setLoading(false);
-            };
-
-            return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-                    <Card>
-                        <Lbl>КОД OBD-II ИЛИ СИМПТОМ</Lbl>
-                        <div style={{ display: "flex", gap: 8 }}>
-                            <Input value={input} onChange={e => setInput(e.target.value)} placeholder="Напр: P0301" style={{ flex: 1 }} />
-                            <PBtn onClick={() => run()} disabled={loading || !input.trim()}>→</PBtn>
-                        </div>
-                    </Card>
-                    {loading && <div style={{ textAlign: "center", padding: 20, color: C.o, animation: "spin 1s linear infinite" }}>⚙ Обработка...</div>}
-                    {err && <Card style={{ color: C.r }}>{err}</Card>}
-                    {result && (
-                        <div style={{ display: "flex", flexDirection: "column", gap: 10, animation: "fadeUp 0.3s ease" }}>
-                            <Card style={{ borderLeft: `4px solid ${C.o}` }}>
-                                <Lbl>{result.system}</Lbl>
-                                <div style={{ fontSize: 18, fontWeight: 700, color: C.t }}>{result.title}</div>
-                                <div style={{ fontSize: 13, color: C.t2, marginTop: 8 }}>{result.description}</div>
-                            </Card>
-                            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
-                                <Card style={{ background: dCfg[result.danger]?.bg, borderColor: dCfg[result.danger]?.color }}>
-                                    <Lbl>ОПАСНОСТЬ</Lbl>
-                                    <div style={{ fontWeight: 700, color: dCfg[result.danger]?.color }}>{dCfg[result.danger]?.label}</div>
-                                </Card>
-                                <Card style={{ background: result.can_drive ? C.gG : C.rG, textAlign: "center" }}>
-                                    <div style={{ fontSize: 24 }}>{result.can_drive ? "✓" : "✗"}</div>
-                                    <div style={{ fontSize: 10, fontWeight: 700, color: result.can_drive ? C.g : C.r }}>{result.can_drive ? "МОЖНО ЕХАТЬ" : "НЕ ЕХАТЬ"}</div>
-                                </Card>
-                            </div>
-                        </div>
-                    )}
-                </div>
-            );
-        }
-
-        function BodyMap({ body, setBody, car, toast }) {
-            const [selected, setSelected] = React.useState(null);
-            const handleClick = (id) => {
-                setSelected(id);
-                const next = nextStatus(body[id]?.status || "ok");
-                setBody(prev => ({ ...prev, [id]: { ...prev[id], status: next } }));
-                toast(`${BODY_PANELS.find(p =>
+  document.getElementById('output').innerHTML = `
+    <div class="result">
+      <div class="card card-accent">
+        <div class="card-label">${(r.system || '').toUpperCase()}</div>
+        <div class="card-title">${r.title}</div>
+        <div class="card-desc">${r.description}</div>
+      </div>
+      <div class="two-col">
+        <div class="card ${dangerClass}">
+          <div class="card-label">ОПАСНОСТЬ</div>
+          <div class="danger-value">${dangerLabel}</div>
+          <div class="danger-reason">${r.danger_reason}</div>
+        </div>
+        <div class="card ${driveClass} drive-card">
+          <div class="drive-icon">${driveIcon}</div>
+          <div class="drive-text">${driveText}</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">СТОИМОСТЬ РЕМОНТА</div>
+        <div class="price-value">${(r.price_min||0).toLocaleString('ru-RU')} – ${(r.price_max||0).toLocaleString('ru-RU')} ₽</div>
+        <div class="price-comment">${r.price_comment}</div>
+      </div>
+      <div class="card">
+        <div class="card-label">ЧТО ДЕЛАТЬ</div>
+        ${actions}
+      </div>
+      <button class="btn-reset" onclick="document.getElementById('output').innerHTML='';document.getElementById('query').value='';">← НОВЫЙ ЗАПРОС</button>
+    </div>`;
+}
+</script>
+</body>
+</html>
