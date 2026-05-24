@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   
   <!-- 🔒 Security Headers -->
   <meta http-equiv="X-UA-Compatible" content="ie=edge" />
@@ -11,8 +11,8 @@
                  script-src 'self' 'wasm-unsafe-eval'; 
                  style-src 'self' 'unsafe-inline'; 
                  img-src 'self' data: https:; 
-                 font-src 'self'; 
-                 connect-src 'self' https://identitytoolkit.googleapis.com https://us-central1-jarvis-auto-prod.cloudfunctions.net; 
+                 font-src 'self' https://fonts.gstatic.com; 
+                 connect-src 'self' https://*.googleapis.com https://*.firebaseio.com https://*.cloudfunctions.net; 
                  frame-ancestors 'none'; 
                  object-src 'none'" />
   <meta name="referrer" content="strict-origin-when-cross-origin" />
@@ -20,38 +20,116 @@
   <meta http-equiv="X-Frame-Options" content="DENY" />
   <meta http-equiv="X-XSS-Protection" content="1; mode=block" />
   
-  <!-- Meta Info -->
-  <title>JARVIS AUTO — Диагностика автомобиля с ИИ</title>
-  <meta name="description" content="AI-диагностика автомобиля — расшифровка ошибок OBD и оценка стоимости ремонта" />
+  <!-- SEO & Meta -->
+  <meta name="description" content="Jarvis Auto — AI-платформа управления автомобилем. Диагностика OBD-II, сервисная книжка, аналитика расходов" />
   <meta name="theme-color" content="#060c18" />
+  <meta name="color-scheme" content="dark light" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Jarvis Auto" />
   
-  <!-- Preconnect для оптимизации -->
+  <!-- PWA Manifest -->
+  <link rel="manifest" href="/manifest.json" />
+  <link rel="apple-touch-icon" href="/logo-192.png" />
+  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  
+  <!-- Fonts (Preconnect) -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
-  <link rel="preconnect" href="https://us-central1-jarvis-auto-prod.cloudfunctions.net" />
+  <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" />
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600;700&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
   
-  <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+  <!-- Firebase & Google Services (Preconnect) -->
+  <link rel="preconnect" href="https://identitytoolkit.googleapis.com" />
+  <link rel="preconnect" href="https://firebaseinstallations.googleapis.com" />
+  
+  <title>Jarvis Auto — Диагностика автомобиля с ИИ</title>
+  
   <style>
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
-    }
-    body {
       margin: 0;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-        'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica
-        Neue', sans-serif;
+      padding: 0;
+    }
+    
+    html {
+      scroll-behavior: smooth;
+    }
+    
+    html, body, #root {
+      height: 100%;
+      width: 100%;
+      background: #060c18;
+      color: #dde3f0;
+      font-family: 'IBM Plex Mono', monospace;
       -webkit-font-smoothing: antialiased;
       -moz-osx-font-smoothing: grayscale;
+      overscroll-behavior: none;
     }
-    input {
+    
+    body {
+      overflow: hidden;
+    }
+    
+    #root {
+      display: flex;
+      flex-direction: column;
+    }
+    
+    input, textarea, select {
       -webkit-appearance: none;
       appearance: none;
     }
+    
+    /* Optimize for smooth scrolling */
+    @media (prefers-reduced-motion: no-preference) {
+      html {
+        scroll-behavior: smooth;
+      }
+    }
+    
+    /* Safe area for notched phones */
+    @supports (padding: max(0px)) {
+      body {
+        padding-left: max(0px, env(safe-area-inset-left));
+        padding-right: max(0px, env(safe-area-inset-right));
+        padding-top: max(0px, env(safe-area-inset-top));
+        padding-bottom: max(0px, env(safe-area-inset-bottom));
+      }
+    }
   </style>
+  
+  <!-- No-script fallback -->
+  <noscript>
+    <style>
+      #root::after {
+        content: 'Jarvis Auto требует JavaScript';
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+        color: #FF6B00;
+        font-size: 18px;
+        text-align: center;
+      }
+    </style>
+  </noscript>
 </head>
 <body>
   <div id="root"></div>
-  <script type="module" src="/main.jsx"></script>
+  
+  <!-- Main app script -->
+  <script type="module" src="/src/main.jsx"></script>
+  
+  <!-- Service Worker registration -->
+  <script>
+    if ('serviceWorker' in navigator && location.protocol === 'https:') {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/service-worker.js')
+          .then(reg => console.log('✓ SW registered:', reg.scope))
+          .catch(err => console.error('✗ SW registration failed:', err));
+      });
+    }
+  </script>
 </body>
 </html>
