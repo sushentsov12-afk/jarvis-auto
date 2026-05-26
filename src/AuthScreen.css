@@ -1,0 +1,146 @@
+/* AuthScreen Styles */
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-screen {
+  background: #060c18;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.6s ease;
+}
+
+.auth-card {
+  max-width: 450px;
+  width: 100%;
+  background: linear-gradient(135deg, #0b1628 0%, #08101f 100%);
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 48px 32px;
+  text-align: center;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.auth-logo {
+  font-size: 64px;
+  margin-bottom: 24px;
+}
+
+.auth-title {
+  font-size: 32px;
+  font-weight: 700;
+  color: #dde3f0;
+  margin: 0 0 12px 0;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.auth-subtitle {
+  font-size: 14px;
+  color: #8892a6;
+  margin: 0 0 32px 0;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 2px;
+}
+
+.auth-description {
+  font-size: 13px;
+  color: #a8b2be;
+  line-height: 1.6;
+  margin-bottom: 32px;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.auth-features {
+  background: rgba(255, 107, 0, 0.05);
+  border: 1px solid rgba(255, 107, 0, 0.15);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 32px;
+  text-align: left;
+  font-size: 12px;
+  color: #a8b2be;
+  line-height: 1.8;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.auth-features div {
+  margin-bottom: 10px;
+}
+
+.auth-features div:last-child {
+  margin-bottom: 0;
+}
+
+.auth-button {
+  width: 100%;
+  padding: 14px 24px;
+  background: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.15);
+}
+
+.auth-button:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(255, 107, 0, 0.25);
+}
+
+.auth-button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 8px;
+  font-size: 12px;
+  color: #ef4444;
+  font-family: 'IBM Plex Sans', sans-serif;
+}
+
+.auth-footer {
+  margin-top: 24px;
+  font-size: 11px;
+  color: #6b7684;
+  font-family: 'IBM Plex Mono', monospace;
+  letter-spacing: 0.5px;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .auth-card {
+    padding: 32px 20px;
+  }
+
+  .auth-title {
+    font-size: 24px;
+  }
+
+  .auth-button {
+    padding: 12px 20px;
+    font-size: 13px;
+  }
+}
