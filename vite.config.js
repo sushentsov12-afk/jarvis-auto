@@ -2,6 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+const isProduction = process.env.NODE_ENV === 'production';
+
 export default defineConfig({
   plugins: [
     react({
@@ -18,23 +20,31 @@ export default defineConfig({
     }),
   ],
   server: {
+    host: '0.0.0.0',
     port: 3000,
-    open: true,
+    strictPort: true,
+    open: false,
     cors: true,
-    hmr: {
-      protocol: 'ws',
-      host: 'localhost',
-      port: 5173,
-    },
+    hmr: process.env.VERCEL
+      ? undefined
+      : {
+          protocol: 'ws',
+          host: 'localhost',
+          port: 5173,
+        },
+  },
+  preview: {
+    host: '0.0.0.0',
+    port: 4173,
   },
   build: {
     outDir: 'dist',
-    sourcemap: process.env.NODE_ENV === 'production' ? false : true,
+    sourcemap: !isProduction,
     minify: 'terser',
     terserOptions: {
       compress: {
-        drop_console: process.env.NODE_ENV === 'production',
-        drop_debugger: process.env.NODE_ENV === 'production',
+        drop_console: isProduction,
+        drop_debugger: isProduction,
       },
     },
     reportCompressedSize: true,
@@ -43,8 +53,8 @@ export default defineConfig({
       output: {
         manualChunks: {
           'react-core': ['react', 'react-dom'],
-          'recharts': ['recharts'],
-          'firebase': ['firebase/app', 'firebase/auth', 'firebase/firestore'],
+          recharts: ['recharts'],
+          firebase: ['firebase/app', 'firebase/auth', 'firebase/firestore'],
         },
         entryFileNames: 'js/[name]-[hash].js',
         chunkFileNames: 'js/[name]-[hash].js',
