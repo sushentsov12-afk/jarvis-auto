@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useCar } from "./garage/carContext";
 
 export function makeNewCarId() {
   return "car_" + Date.now();
@@ -7,7 +8,7 @@ export function makeNewCarId() {
 export function makeEmptyCar() {
   return {
     id: makeNewCarId(),
-    name: "Без названия",
+    name: "",
     brand: "",
     model: "",
     year: "",
@@ -17,57 +18,47 @@ export function makeEmptyCar() {
 
 export default function GarageScreen() {
   const [cars, setCars] = useState([]);
-  const [activeCarId, setActiveCarId] = useState(null);
+  const { activeCar, setActiveCar } = useCar();
 
   function addCar() {
     const car = makeEmptyCar();
-    setCars((prev) => [...prev, car]);
-    setActiveCarId(car.id);
+    setCars((p) => [...p, car]);
+    setActiveCar(car);
   }
 
   function updateCar(id, field, value) {
-    setCars((prev) =>
-      prev.map((c) =>
-        c.id === id ? { ...c, [field]: value } : c
-      )
+    setCars((p) =>
+      p.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
   }
 
-  const activeCar = cars.find((c) => c.id === activeCarId);
-
   return (
-    <div style={{ padding: 20, color: "white", background: "#111", minHeight: "100vh" }}>
-      
-      <h2>Гараж</h2>
+    <div style={{ padding: 20, background: "#111", color: "#fff", minHeight: "100vh" }}>
+      <h2>Garage</h2>
 
-      <button onClick={addCar} style={{ padding: 10, marginBottom: 20 }}>
-        + Добавить авто
-      </button>
+      <button onClick={addCar}>+ Add car</button>
 
-      <div style={{ display: "flex", gap: 10 }}>
+      <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
         {cars.map((car) => (
           <div
             key={car.id}
-            onClick={() => setActiveCarId(car.id)}
+            onClick={() => setActiveCar(car)}
             style={{
               padding: 10,
-              border: "1px solid gray",
+              border: "1px solid #444",
               cursor: "pointer",
-              background: car.id === activeCarId ? "#333" : "#222",
+              background: activeCar?.id === car.id ? "#333" : "#222",
             }}
           >
-            {car.brand || "Авто"} {car.model}
+            {car.brand || "Car"} {car.model}
           </div>
         ))}
       </div>
 
       {activeCar && (
         <div style={{ marginTop: 20 }}>
-          
-          <h3>Редактирование авто</h3>
-
           <input
-            placeholder="Марка"
+            placeholder="Brand"
             value={activeCar.brand}
             onChange={(e) =>
               updateCar(activeCar.id, "brand", e.target.value)
@@ -75,7 +66,7 @@ export default function GarageScreen() {
           />
 
           <input
-            placeholder="Модель"
+            placeholder="Model"
             value={activeCar.model}
             onChange={(e) =>
               updateCar(activeCar.id, "model", e.target.value)
@@ -83,7 +74,7 @@ export default function GarageScreen() {
           />
 
           <input
-            placeholder="Год"
+            placeholder="Year"
             value={activeCar.year}
             onChange={(e) =>
               updateCar(activeCar.id, "year", e.target.value)
@@ -97,7 +88,6 @@ export default function GarageScreen() {
               updateCar(activeCar.id, "vin", e.target.value)
             }
           />
-
         </div>
       )}
     </div>
