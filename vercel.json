@@ -31,3 +31,16 @@
     }
   ]
 }
+{
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Content-Security-Policy",
+          "value": "script-src 'self' 'unsafe-inline' https://apis.google.com https://www.gstatic.com; frame-src https://accounts.google.com"
+        }
+      ]
+    }
+  ]
+}
