@@ -1,7 +1,7 @@
 import { useAuth } from "./AuthContext.jsx";
 
 export default function UserMenu({ onProfileClick }) {
-  const { user, logout } = useAuth();
+  const { signOut } = useAuth();
 
   return (
     <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
@@ -18,7 +18,7 @@ export default function UserMenu({ onProfileClick }) {
       </button>
 
       <button
-        onClick={logout}
+        onClick={signOut}
         style={{
           padding: "8px 12px",
           borderRadius: 8,
