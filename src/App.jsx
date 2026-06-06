@@ -231,16 +231,6 @@ export default function App(){
   const {user,loading:authLoading}=useAuth();
   const uid=user?.uid;
 
-  const [car, setCar] = useState(DEF_CAR);
-  const[services,setServices]=usePersist("services",DEF_SVC);
-  const[expenses,setExpenses]=usePersist("expenses",DEF_EXP);
-  const[fuel,setFuel]=usePersist("fuel",DEF_FUEL);
-  const[diagHistory,setDiagHistory]=usePersist("diag",[]);
-  const[body,setBody]=usePersist("body",DEF_BODY);
-  const[tires,setTires]=usePersist("tires",DEF_TIRES);
-  const[docs,setDocs]=usePersist("docs",DEF_DOCS);
-  const[appts,setAppts]=usePersist("appts",[]);
-
   const{cloudReady,cloudError}=useFirestoreSync({uid,car,setCar,services,setServices,expenses,setExpenses,fuel,setFuel,diagHistory,setDiagHistory,body,setBody,tires,setTires,docs,setDocs,appts,setAppts});
 
   const[tab,setTab]=useState("dash");
