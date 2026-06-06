@@ -232,7 +232,7 @@ export default function App(){
   const {user,loading:authLoading}=useAuth();
   const uid=user?.uid;
 
-  const[car,setCar]=usePersist("car",DEF_CAR);
+  const [car, setCar] = useState(DEF_CAR);
   const[services,setServices]=usePersist("services",DEF_SVC);
   const[expenses,setExpenses]=usePersist("expenses",DEF_EXP);
   const[fuel,setFuel]=usePersist("fuel",DEF_FUEL);
@@ -255,10 +255,10 @@ export default function App(){
 
   const INTERVAL=15000;
 
-  useEffect(()=>{
-    setCar(prev=>({...prev,mileage:mileageInput}));
-    setServices(recalcAll(services,mileageInput));
-  },[mileageInput,setCar,setServices,services]);
+  useEffect(() => {
+  setCar(prev => ({ ...prev, mileage: mileageInput }));
+  setServices(prev => recalcAll(prev, mileageInput));
+}, [mileageInput]);
 
   useEffect(()=>{
     const style=document.createElement("style");
@@ -455,3 +455,21 @@ export default function App(){
       <TipPopup tip={currentTip} onClose={()=>setCurrentTip(null)}/>
       <DebugPanel />
     </div>
+const lastHash = useRef("");
+
+useEffect(() => {
+  const hash = JSON.stringify({ car, services, expenses, fuel, body, docs });
+
+  if (hash === lastHash.current) return;
+
+  lastHash.current = hash;
+
+  syncCarFull(uid, car.id, {
+    car,
+    services,
+    expenses,
+    fuel,
+    body,
+    docs
+  });
+}, [car, services, expenses, fuel, body, docs]);
