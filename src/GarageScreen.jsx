@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { useCar } from "./garage/carContext";
 
 export function makeNewCarId() {
   return "car_" + Date.now();
@@ -16,20 +15,26 @@ export function makeEmptyCar() {
   };
 }
 
-export default function GarageScreen() {
-  const [cars, setCars] = useState([]);
-  const { activeCar, setActiveCar } = useCar();
+export default function GarageScreen({ car, setCar, onClose }) {
+  const [cars, setCars] = useState(car ? [car] : []);
+  const [activeCar, setActiveCar] = useState(car || null);
 
   function addCar() {
-    const car = makeEmptyCar();
-    setCars((p) => [...p, car]);
-    setActiveCar(car);
+    const newCar = makeEmptyCar();
+    setCars((p) => [...p, newCar]);
+    setActiveCar(newCar);
+    if (setCar) setCar(newCar);
   }
 
   function updateCar(id, field, value) {
     setCars((p) =>
       p.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
+
+    if (activeCar?.id === id) {
+      setActiveCar((p) => ({ ...p, [field]: value }));
+      if (setCar) setCar({ ...activeCar, [field]: value });
+    }
   }
 
   return (
@@ -37,20 +42,21 @@ export default function GarageScreen() {
       <h2>Garage</h2>
 
       <button onClick={addCar}>+ Add car</button>
+      <button onClick={onClose}>Close</button>
 
       <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
-        {cars.map((car) => (
+        {cars.map((c) => (
           <div
-            key={car.id}
-            onClick={() => setActiveCar(car)}
+            key={c.id}
+            onClick={() => setActiveCar(c)}
             style={{
               padding: 10,
               border: "1px solid #444",
               cursor: "pointer",
-              background: activeCar?.id === car.id ? "#333" : "#222",
+              background: activeCar?.id === c.id ? "#333" : "#222",
             }}
           >
-            {car.brand || "Car"} {car.model}
+            {c.brand || "Car"} {c.model}
           </div>
         ))}
       </div>
@@ -60,33 +66,25 @@ export default function GarageScreen() {
           <input
             placeholder="Brand"
             value={activeCar.brand}
-            onChange={(e) =>
-              updateCar(activeCar.id, "brand", e.target.value)
-            }
+            onChange={(e) => updateCar(activeCar.id, "brand", e.target.value)}
           />
 
           <input
             placeholder="Model"
             value={activeCar.model}
-            onChange={(e) =>
-              updateCar(activeCar.id, "model", e.target.value)
-            }
+            onChange={(e) => updateCar(activeCar.id, "model", e.target.value)}
           />
 
           <input
             placeholder="Year"
             value={activeCar.year}
-            onChange={(e) =>
-              updateCar(activeCar.id, "year", e.target.value)
-            }
+            onChange={(e) => updateCar(activeCar.id, "year", e.target.value)}
           />
 
           <input
             placeholder="VIN"
             value={activeCar.vin}
-            onChange={(e) =>
-              updateCar(activeCar.id, "vin", e.target.value)
-            }
+            onChange={(e) => updateCar(activeCar.id, "vin", e.target.value)}
           />
         </div>
       )}
