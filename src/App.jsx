@@ -445,7 +445,34 @@ export default function App(){
       <DebugPanel />
     </div>
 const lastHash = useRef("");
+const [car, setCar] = useState(DEF_CAR);
+const [services, setServices] = useState(DEF_SVC);
+const [expenses, setExpenses] = useState(DEF_EXP);
+const [fuel, setFuel] = useState(DEF_FUEL);
+const [body, setBody] = useState(DEF_BODY);
+const [docs, setDocs] = useState(DEF_DOCS);
+const [tires, setTires] = useState(DEF_TIRES);
+const [appts, setAppts] = useState([]);
 
+const lastHash = useRef("");
+
+useEffect(() => {
+  const hash = JSON.stringify({ car, services, expenses, fuel, body, docs });
+
+  if (hash === lastHash.current) return;
+  lastHash.current = hash;
+
+  if (!uid) return;
+
+  syncCarFull(uid, car.id, {
+    car,
+    services,
+    expenses,
+    fuel,
+    body,
+    docs
+  });
+}, [uid, car, services, expenses, fuel, body, docs]);
 useEffect(() => {
   const hash = JSON.stringify({ car, services, expenses, fuel, body, docs });
 
