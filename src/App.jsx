@@ -238,14 +238,14 @@ function TipPopup({tip,onClose}){
 export default function App(){
   const {user,loading:authLoading}=useAuth();
   const uid=user?.uid;
-const [car, setCar] = useState(DEF_CAR);
-const [services, setServices] = useState(DEF_SVC);
-const [expenses, setExpenses] = useState(DEF_EXP);
-const [fuel, setFuel] = useState(DEF_FUEL);
-const [body, setBody] = useState(DEF_BODY);
-const [docs, setDocs] = useState(DEF_DOCS);
-const [tires, setTires] = useState(DEF_TIRES);
-const [appts, setAppts] = useState([]);
+  const [car, setCar] = useState(DEF_CAR);
+  const [services, setServices] = useState(DEF_SVC);
+  const [expenses, setExpenses] = useState(DEF_EXP);
+  const [fuel, setFuel] = useState(DEF_FUEL);
+  const [body, setBody] = useState(DEF_BODY);
+  const [docs, setDocs] = useState(DEF_DOCS);
+  const [tires, setTires] = useState(DEF_TIRES);
+  const [appts, setAppts] = useState([]);
   const{cloudReady,cloudError}=useFirestoreSync({uid,car,setCar,services,setServices,expenses,setExpenses,fuel,setFuel,diagHistory,setDiagHistory,body,setBody,tires,setTires,docs,setDocs,appts,setAppts});
 
   const[tab,setTab]=useState("dash");
