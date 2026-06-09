@@ -458,5 +458,7 @@ export default function App(){
           <Toasts toasts={toasts}/>
       <TipPopup tip={currentTip} onClose={()=>setCurrentTip(null)}/>
       <DebugPanel />
-    </div>
+</div>
+);
+}
 
