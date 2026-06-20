@@ -57,7 +57,6 @@ const CAT_CLR={топливо:C.o,сервис:C.b,страховка:C.p,зап
 
   return [v, set];
 }
-}
 
 function useToast(){
   const[toasts,setToasts]=useState([]);
