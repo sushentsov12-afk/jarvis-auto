@@ -245,6 +245,7 @@ export default function App(){
   const [docs, setDocs] = useState(DEF_DOCS);
   const [tires, setTires] = useState(DEF_TIRES);
   const [appts, setAppts] = useState([]);
+  const [diagHistory, setDiagHistory] = useState([]);
   const{cloudReady,cloudError}=useFirestoreSync({uid,car,setCar,services,setServices,expenses,setExpenses,fuel,setFuel,diagHistory,setDiagHistory,body,setBody,tires,setTires,docs,setDocs,appts,setAppts});
 
   const[tab,setTab]=useState("dash");
