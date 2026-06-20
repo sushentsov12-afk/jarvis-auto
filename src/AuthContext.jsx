@@ -1,6 +1,13 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import { initializeApp } from 'firebase/app';
-import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from 'firebase/auth';
+import {
+  getAuth,
+  signInWithRedirect,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signOut,
+  onAuthStateChanged,
+} from 'firebase/auth';
 
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -23,6 +30,16 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    // Подхватываем результат входа после возврата с redirect-страницы Google.
+    // signInWithRedirect используется вместо signInWithPopup, потому что
+    // popup ломается современными Cross-Origin-Opener-Policy заголовками
+    // (браузер физически не может прочитать результат попапа), что даёт
+    // ложную ошибку auth/popup-closed-by-user даже при успешном входе.
+    getRedirectResult(auth).catch((err) => {
+      console.error('[Auth] Redirect result error:', err);
+      setError(err.message);
+    });
+
     const unsubscribe = onAuthStateChanged(auth, (u) => {
       setUser(u);
       setLoading(false);
@@ -33,7 +50,9 @@ export function AuthProvider({ children }) {
   const signIn = async () => {
     try {
       setError(null);
-      await signInWithPopup(auth, provider);
+      await signInWithRedirect(auth, provider);
+      // Страница перезагрузится на Google и вернётся обратно —
+      // результат подхватит getRedirectResult() выше.
     } catch (err) {
       setError(err.message);
     }
@@ -67,3 +86,4 @@ export function AuthProvider({ children }) {
 export function useAuth() {
   return useContext(AuthContext);
 }
+
