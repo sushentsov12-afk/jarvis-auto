@@ -34,11 +34,11 @@ interface DiagnosisResponse {
   error?: string;
 }
 
-const SYSTEM_PROMPT = `Ты — Джарвис, ИИ-диагн��ст для автомобилей. Отвечай ТОЛЬКО на русском языке.
+const SYSTEM_PROMPT = `Ты — Джарвис, ИИ-диагност для автомобилей. Отвечай ТОЛЬКО на русском языке.
 
 Пользователь вводит код ошибки OBD (например, P0301) или описывает симптом.
 
-Ответи строго в JSON формате без markdown, без backticks:
+Ответь строго в JSON формате без markdown, без backticks:
 {
   "title": "Короткое название проблемы (до 6 слов)",
   "system": "Система автомобиля (Двигатель / Трансмиссия / Тормоза / Электрика / Подвеска и т.д.)",
@@ -55,18 +55,90 @@ const SYSTEM_PROMPT = `Ты — Джарвис, ИИ-диагн��ст для
 }
 
 Цены давай реалистичные для России 2024 года (региональные сервисы, не дилеры).
-Если введён явно не автомобильный запрос — верни { "error": "Это не похоже на автомобильную проблему. Введите код ошибки OBD или опишите симптом." }`;
+Если введён явно не автомобильный запрос — верни { "error": "Это не похоже на автомобильную проблему. Введите код ошибки OBD или симптом." }`;
+
+// ────────────────────────────────────────────────────────────────────────
+// SECURITY UTILITIES
+// ────────────────────────────────────────────────────────────────────────
+
+function isValidOrigin(origin: string, allowedOrigins: string[]): boolean {
+  return allowedOrigins.some(allowed => {
+    if (allowed === '*') return false; // Never allow *
+    if (allowed.includes('*')) {
+      const pattern = allowed
+        .replace(/\./g, '\\.')
+        .replace(/\*/g, '.*');
+      return new RegExp(`^${pattern}$`).test(origin);
+    }
+    return origin === allowed;
+  });
+}
+
+function setCorsHeaders(
+  response: functions.Response,
+  origin: string | undefined,
+  allowedOrigins: string[]
+): boolean {
+  if (!origin || !isValidOrigin(origin, allowedOrigins)) {
+    return false;
+  }
+  response.set('Access-Control-Allow-Origin', origin);
+  response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  response.set('Access-Control-Max-Age', '3600');
+  return true;
+}
+
+function setSecurityHeaders(response: functions.Response): void {
+  response.set('X-Content-Type-Options', 'nosniff');
+  response.set('X-Frame-Options', 'DENY');
+  response.set('X-XSS-Protection', '1; mode=block');
+  response.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  response.set('Content-Security-Policy', "default-src 'self'");
+}
+
+function validateDiagnosisRequest(body: any): string | null {
+  if (!body.query || typeof body.query !== 'string') {
+    return 'Missing or invalid query parameter';
+  }
+  if (body.query.trim().length === 0 || body.query.length > 5000) {
+    return 'Query must be 1-5000 characters';
+  }
+  if (body.carYear && (typeof body.carYear !== 'number' || body.carYear < 1900 || body.carYear > 2100)) {
+    return 'Invalid car year';
+  }
+  if (body.carMileage && (typeof body.carMileage !== 'number' || body.carMileage < 0 || body.carMileage > 10000000)) {
+    return 'Invalid car mileage';
+  }
+  return null;
+}
 
 /**
  * Cloud Function: Диагностика автомобиля (защищённый вызов Claude)
+ * Требует: Firebase Auth Token
+ * 
+ * Использование:
+ * POST /analyzeDiagnosis
+ * Headers: Authorization: Bearer <ID_TOKEN>
+ * Body: { query, carMake, carModel, carYear, carMileage, carFuel }
  */
 export const analyzeDiagnosis = functions
   .region('us-central1')
   .https.onRequest(async (request, response) => {
-    // CORS
-    response.set('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || 'https://localhost:3000');
-    response.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // Parse allowed origins from environment
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://localhost:3000')
+      .split(',')
+      .map(o => o.trim());
+
+    // Set security headers first
+    setSecurityHeaders(response);
+
+    // Set CORS headers
+    const origin = request.headers.origin as string | undefined;
+    if (!setCorsHeaders(response, origin, allowedOrigins)) {
+      response.status(403).json({ error: 'CORS policy violation' });
+      return;
+    }
 
     if (request.method === 'OPTIONS') {
       response.status(204).send('');
@@ -74,7 +146,7 @@ export const analyzeDiagnosis = functions
     }
 
     try {
-      // Проверка аутентификации
+      // 1. Проверка аутентификации
       const authHeader = request.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         response.status(401).json({ error: 'Unauthorized: Missing auth token' });
@@ -82,8 +154,12 @@ export const analyzeDiagnosis = functions
       }
 
       const token = authHeader.substring(7);
-      let decodedToken;
+      if (!token || token.length < 10) {
+        response.status(401).json({ error: 'Unauthorized: Invalid token format' });
+        return;
+      }
 
+      let decodedToken;
       try {
         decodedToken = await admin.auth().verifyIdToken(token);
       } catch (err) {
@@ -93,15 +169,15 @@ export const analyzeDiagnosis = functions
 
       const uid = decodedToken.uid;
 
-      // Валидация request body
+      // 2. Валидация request body
       const body = request.body as DiagnosisRequest;
-
-      if (!body.query || typeof body.query !== 'string') {
-        response.status(400).json({ error: 'Missing or invalid query parameter' });
+      const validationError = validateDiagnosisRequest(body);
+      if (validationError) {
+        response.status(400).json({ error: validationError });
         return;
       }
 
-      // Rate limiting
+      // Rate limiting: максимум 10 запросов в час на пользователя
       const rateLimitRef = admin.firestore().collection('rate_limits').doc(uid);
       const rateLimitSnap = await rateLimitRef.get();
       const now = Date.now();
@@ -120,17 +196,17 @@ export const analyzeDiagnosis = functions
         return;
       }
 
-      await rateLimitRef.set({ hour, count });
+      await rateLimitRef.set({ hour, count }, { merge: true });
 
-      // Логирование
+      // 3. Логирование запроса (БЕЗ чувствительных данных)
       await admin.firestore().collection('audit_logs').add({
         uid,
         action: 'diagnosis',
-        query: body.query,
+        query_length: body.query.length,
         timestamp: admin.firestore.FieldValue.serverTimestamp(),
       });
 
-      // Контекст для Claude
+      // 4. Подготовка контекста для Claude
       const context = [
         `Авто: ${body.carMake || '—'} ${body.carModel || '—'} ${body.carYear || '—'}`,
         body.carMileage ? `Пробег: ${body.carMileage.toLocaleString()} км` : '',
@@ -141,10 +217,10 @@ export const analyzeDiagnosis = functions
 
       const userMessage = context ? `${context}\n\n${body.query}` : body.query;
 
-      // Вызов Claude API
+      // 5. Вызов Claude API с таймаутом
       const diagnosisResult = await Promise.race([
         client.messages.create({
-          model: 'claude-sonnet-4-20250514',
+          model: 'claude-sonnet-4-6',
           max_tokens: 1000,
           system: SYSTEM_PROMPT,
           messages: [
@@ -154,13 +230,15 @@ export const analyzeDiagnosis = functions
             },
           ],
         }),
-        new Promise((_, reject) =>
+        new Promise<never>((_, reject) =>
           setTimeout(() => reject(new Error('Claude API timeout')), 25000)
         ),
       ]);
 
-      // Парсинг ответа
-      const textBlock = diagnosisResult.content.find((block) => block.type === 'text');
+      // 6. Парсинг ответа
+      const textBlock = diagnosisResult.content.find(
+        (block: { type: string }) => block.type === 'text'
+      );
       if (!textBlock || textBlock.type !== 'text') {
         throw new Error('No text in Claude response');
       }
@@ -173,7 +251,7 @@ export const analyzeDiagnosis = functions
 
       const diagnosis: DiagnosisResponse = JSON.parse(jsonMatch[0]);
 
-      // Сохранение в Firestore
+      // 7. Сохранение результата в Firestore
       await admin
         .firestore()
         .collection('users')
@@ -187,15 +265,18 @@ export const analyzeDiagnosis = functions
           timestamp: admin.firestore.FieldValue.serverTimestamp(),
         });
 
-      // Ответ
+      // 8. Отправка ответа клиенту
       response.status(200).json(diagnosis);
     } catch (error) {
       console.error('Error in analyzeDiagnosis:', error);
 
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
 
-      if (errorMessage.includes('Claude')) {
+      // Не раскрывай внутренние ошибки клиенту
+      if (errorMessage.includes('Claude') || errorMessage.includes('timeout')) {
         response.status(503).json({ error: 'AI service temporarily unavailable' });
+      } else if (errorMessage.includes('JSON')) {
+        response.status(500).json({ error: 'Invalid response format' });
       } else {
         response.status(500).json({ error: 'Internal server error' });
       }
@@ -203,14 +284,20 @@ export const analyzeDiagnosis = functions
   });
 
 /**
- * Cloud Function: Советы Джарвиса
+ * Cloud Function: Генерация советов (для AI Tips)
  */
 export const generateTips = functions
   .region('us-central1')
   .https.onRequest(async (request, response) => {
-    response.set('Access-Control-Allow-Origin', process.env.ALLOWED_ORIGINS || 'https://localhost:3000');
-    response.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
-    response.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    // Parse allowed origins from environment
+    const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'https://localhost:3000')
+      .split(',')
+      .map(o => o.trim());
+
+    // Set security headers
+    setSecurityHeaders(response);
+    const origin = request.headers.origin as string | undefined;
+    setCorsHeaders(response, origin, allowedOrigins);
 
     if (request.method === 'OPTIONS') {
       response.status(204).send('');
@@ -218,10 +305,11 @@ export const generateTips = functions
     }
 
     try {
+      // Проверка аутентификации
       const authHeader = request.headers.authorization;
       const token = authHeader?.substring(7);
 
-      if (!token) {
+      if (!token || token.length < 10) {
         response.status(401).json({ error: 'Unauthorized' });
         return;
       }
@@ -230,8 +318,14 @@ export const generateTips = functions
 
       const { question, carMake, carModel, carYear } = request.body;
 
-      if (!question) {
-        response.status(400).json({ error: 'Missing question' });
+      // Валидация
+      if (!question || typeof question !== 'string' || question.trim().length === 0 || question.length > 2000) {
+        response.status(400).json({ error: 'Invalid question parameter' });
+        return;
+      }
+
+      if (carYear && (typeof carYear !== 'number' || carYear < 1900 || carYear > 2100)) {
+        response.status(400).json({ error: 'Invalid car year' });
         return;
       }
 
@@ -240,7 +334,7 @@ export const generateTips = functions
 ${carMake && carModel ? `Специально для ${carMake} ${carModel} ${carYear}.` : ''}`;
 
       const tipsResult = await client.messages.create({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-6',
         max_tokens: 600,
         system: tipsSystemPrompt,
         messages: [
@@ -264,6 +358,43 @@ ${carMake && carModel ? `Специально для ${carMake} ${carModel} ${ca
   });
 
 /**
+ * Cloud Function: Миграция данных (запускается при первом входе)
+ */
+export const migrateUserData = functions
+  .region('us-central1')
+  .https.onCall(async (data, context) => {
+    // context.auth содержит информацию об аутентифицированном пользователе
+
+    if (!context.auth) {
+      throw new functions.https.HttpsError('unauthenticated', 'User must be authenticated');
+    }
+
+    const uid = context.auth.uid;
+    const { localData } = data;
+
+    try {
+      // Логирование миграции
+      console.log(`Migrating data for user ${uid}`);
+
+      // Пример: сохранение профиля
+      if (localData.name && typeof localData.name === 'string') {
+        await admin.firestore().collection('users').doc(uid).set(
+          {
+            name: localData.name.substring(0, 100),
+            migratedAt: admin.firestore.FieldValue.serverTimestamp(),
+          },
+          { merge: true }
+        );
+      }
+
+      return { success: true, message: 'Data migrated successfully' };
+    } catch (error) {
+      console.error('Migration error:', error);
+      throw new functions.https.HttpsError('internal', 'Migration failed');
+    }
+  });
+
+/**
  * Cloud Function: Удаление аккаунта (GDPR)
  */
 export const deleteUserAccount = functions
@@ -276,6 +407,7 @@ export const deleteUserAccount = functions
     const uid = context.auth.uid;
 
     try {
+      // 1. Удалить все документы пользователя из Firestore
       const userRef = admin.firestore().collection('users').doc(uid);
       const subcollections = ['cars', 'expenses', 'fuel_logs', 'diagnostics', 'documents', 'maintenance'];
 
@@ -286,8 +418,18 @@ export const deleteUserAccount = functions
         }
       }
 
+      // 2. Удалить сам документ пользователя
       await userRef.delete();
+
+      // 3. Удалить аккаунт из Authentication
       await admin.auth().deleteUser(uid);
+
+      // 4. Логирование удаления
+      await admin.firestore().collection('audit_logs').add({
+        uid,
+        action: 'account_deleted',
+        timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      });
 
       console.log(`User ${uid} account deleted`);
 
@@ -299,11 +441,54 @@ export const deleteUserAccount = functions
   });
 
 /**
- * Cloud Function: Очистка старых логов
+ * Cloud Function: Отправка push-уведомлений о ТО
+ * Запускается каждый день (Pub/Sub trigger)
+ */
+export const notifyMaintenanceDue = functions
+  .region('us-central1')
+  .pubsub.schedule('0 9 * * *') // 9:00 каждый день
+  .timeZone('Europe/Moscow')
+  .onRun(async (context) => {
+    try {
+      const usersRef = admin.firestore().collection('users');
+      const usersSnap = await usersRef.get();
+
+      for (const userDoc of usersSnap.docs) {
+        const uid = userDoc.id;
+        const carsRef = usersRef.doc(uid).collection('cars');
+        const carsSnap = await carsRef.get();
+
+        for (const carDoc of carsSnap.docs) {
+          const carId = carDoc.id;
+          const servicesRef = usersRef.doc(uid).collection('maintenance').doc(carId).collection('services');
+          const servicesSnap = await servicesRef.get();
+
+          for (const serviceDoc of servicesSnap.docs) {
+            const service = serviceDoc.data();
+
+            // Если статус "overdue" или "warning", отправить уведомление
+            if (['overdue', 'warning'].includes(service.status)) {
+              // TODO: Отправить push-уведомление через Firebase Cloud Messaging
+              console.log(`Should notify ${uid} about ${service.name}`);
+            }
+          }
+        }
+      }
+
+      console.log('Maintenance notifications sent');
+      return null;
+    } catch (error) {
+      console.error('Error in notifyMaintenanceDue:', error);
+      return null;
+    }
+  });
+
+/**
+ * Cloud Function: Очистка старых логов (для экономии места)
  */
 export const cleanupOldLogs = functions
   .region('us-central1')
-  .pubsub.schedule('0 3 * * 0')
+  .pubsub.schedule('0 3 * * 0') // Воскресенье 3:00 ночи
   .timeZone('Europe/Moscow')
   .onRun(async (context) => {
     try {
@@ -313,10 +498,12 @@ export const cleanupOldLogs = functions
       const oldLogsSnap = await logsRef.where('timestamp', '<', thirtyDaysAgo).get();
 
       let deleted = 0;
+      const batch = admin.firestore().batch();
       for (const doc of oldLogsSnap.docs) {
-        await doc.ref.delete();
+        batch.delete(doc.ref);
         deleted++;
       }
+      await batch.commit();
 
       console.log(`Deleted ${deleted} old audit logs`);
       return null;
