@@ -21,6 +21,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
+provider.addScope('email');
+provider.addScope('profile');
+provider.setCustomParameters({ prompt: 'select_account' });
 
 const AuthContext = createContext();
 
@@ -30,17 +33,24 @@ export function AuthProvider({ children }) {
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Подхватываем результат входа после возврата с redirect-страницы Google.
-    // signInWithRedirect используется вместо signInWithPopup, потому что
-    // popup ломается современными Cross-Origin-Opener-Policy заголовками
-    // (браузер физически не может прочитать результат попапа), что даёт
-    // ложную ошибку auth/popup-closed-by-user даже при успешном входе.
-    getRedirectResult(auth).catch((err) => {
-      console.error('[Auth] Redirect result error:', err);
-      setError(err.message);
-    });
+    // Сначала пробуем подхватить результат redirect-входа.
+    // Важно: await нужен чтобы onAuthStateChanged не сработал
+    // раньше, чем Firebase обработает возврат с Google.
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          console.log('[Auth] Redirect result: user =', result.user.email);
+        } else {
+          console.log('[Auth] Redirect result: no user (обычный заход, не после redirect)');
+        }
+      })
+      .catch((err) => {
+        console.error('[Auth] Redirect result error:', err.code, err.message);
+        setError(err.message);
+      });
 
     const unsubscribe = onAuthStateChanged(auth, (u) => {
+      console.log('[Auth] onAuthStateChanged:', u ? u.email : 'null');
       setUser(u);
       setLoading(false);
     });
