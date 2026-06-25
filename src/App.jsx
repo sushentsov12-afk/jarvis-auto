@@ -293,7 +293,16 @@ export default function App(){
 
   if(authLoading)return<Spinner/>;
   if(!user)return<AuthScreen/>;
-  if(!cloudReady)return<Spinner/>;
+  if(!cloudReady)return(
+    <div style={{display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",height:"100vh",background:"#060c18",color:"#dde3f0",fontFamily:"monospace",gap:12}}>
+      <div style={{fontSize:24}}>⚙️</div>
+      <div style={{fontSize:13,color:"#ff9900"}}>ЗАГРУЗКА ДАННЫХ...</div>
+      <div style={{fontSize:11,color:"#aaa",maxWidth:320,textAlign:"center"}}>
+        uid: {uid || "нет"}<br/>
+        Если зависло — проверь Firestore правила
+      </div>
+    </div>
+  );
 
   if(cloudError)console.warn("[App] Cloud error:",cloudError);
 
