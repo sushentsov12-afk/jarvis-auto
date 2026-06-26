@@ -1,22 +1,76 @@
 import { createContext, useContext, useState, useEffect } from 'react';
 import {
   getAuth,
-  signInWithRedirect,
-  getRedirectResult,
+  signInWithPopup,
   GoogleAuthProvider,
   signOut,
   onAuthStateChanged,
 } from 'firebase/auth';
 import app from './firebaseConfig.js';
 
-// Используем единственный Firebase app из firebaseConfig.js.
-// Раньше здесь был свой initializeApp() — это создавало два
-// независимых экземпляра Firebase, что ломало Firestore-синхронизацию.
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
 provider.addScope('email');
 provider.addScope('profile');
-provider.setCustomParameters({ prompt: 'select_account' });
+
+const AuthContext = createContext();
+
+export function AuthProvider({ children }) {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (u) => {
+      console.log('[Auth] onAuthStateChanged:', u ? u.email : 'null');
+      setUser(u);
+      setLoading(false);
+    });
+    return unsubscribe;
+  }, []);
+
+  const signIn = async () => {
+    try {
+      setError(null);
+      await signInWithPopup(auth, provider);
+    } catch (err) {
+      // popup-closed-by-user — пользователь сам закрыл, не ошибка
+      if (err.code !== 'auth/popup-closed-by-user') {
+        setError(err.message);
+        console.error('[Auth] signIn error:', err.code, err.message);
+      }
+    }
+  };
+
+  const logOut = async () => {
+    try {
+      setError(null);
+      await signOut(auth);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <AuthContext.Provider value={{
+      user,
+      loading,
+      error,
+      signIn,
+      signOut: logOut,
+      displayName: user?.displayName,
+      email: user?.email,
+      photoURL: user?.photoURL,
+    }}>
+      {children}
+    </AuthContext.Provider>
+  );
+}
+
+export function useAuth() {
+  return useContext(AuthContext);
+}
+
 
 const AuthContext = createContext();
 
